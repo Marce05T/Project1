@@ -22,9 +22,24 @@ engine = create_engine(os.getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
 
-@app.route("/")
-def index():
-    return render_template("index.hmtl")
+#@app.route("/", methods=["GET","POST"])
+
+   # if session.get("user_id") is None:
+    #    return redirect("/login")
+    
+    #def index():
+     #   if request.method == "POST":
+      #      index_r = request.form.get("index")
+       #     if index_r == index:
+       #         return render_template("indext.html")
+        #    resultado = db.execute("SELECT subject_professor.subject, profesores.id, profesores.name, description_professor.description FROM subject_professor JOIN profesores ON profesores.id = subject_professor.id_professor JOIN description_professor ON description_professor.id_professor = subject_professor.id_professor WHERE subject_professor.subject = ?", index_r)
+
+        #return render_template("index.html", resultados=resultado)
+
+    #else:
+     #   resultado = db.execute("SELECT subject_professor.subject, profesores.id, profesores.name, description_professor.description FROM subject_professor JOIN profesores ON profesores.id = subject_professor.id_professor JOIN description_professor ON description_professor.id_professor = subject_professor.id_professor GROUP BY profesores.name")
+
+    #    return render_template("index.html", resultados=resultado)#
 
 @app.route("/login", methods=["GET","POST"])
 def login():

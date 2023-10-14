@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block title %}
+    Menú
+///{% endblock %}
+
+{% block main %}
+<form action="/" method="POST">
+        <select name="index">
+            <option selected>Index</option>
+            <option value="Matemáticas">Matemáticas</option>
+            <option value="Física">Física</option>
+            <option value="Química">Química</option>
+            <option value="Biología">Biología</option>
+            <option value="Inglés">Inglés</option>
+        </select>
+          <button class="btn btn-primary" type="submit">Buscar</button><br><br><br><br>
+        <div class="row row-cols-2 row-cols-lg-5 g-2 g-lg-3">
+            {% for valor in resultados %}
+            <br>
+            <div id="hover" class="cards" style="width: 17rem; height: 25rem;">
+                <img src="https://th.bing.com/th/id/R.48350116a2c84f4c94d63e1aaca665d8?rik=9J0NuLMHD%2fLhvw&riu=http%3a%2f%2ffc06.deviantart.net%2ffs70%2ff%2f2012%2f193%2f6%2fb%2fson_goku_render_extraction_png_by_tatty_bojangles-d56y5ey.png&ehk=Ivju3wueC4nRoaDxlCC9HL%2b69gmcjy5VgiJRYURrG9U%3d&risl=&pid=ImgRaw&r=0" class="card-img-top" alt="">
+                <div class="card-body">
+                  <h5 class="card-title">{{ valor.name }}</h5>
+                  <p class="card-text" maxlenght=5;>{{ valor.description }}</p>
+                  <a href="/pag_prof/{{valor.id}}" class="btn btn-primary" value="{{ valor.name }}" name = "nombrep">Ver a detalle</a>
+                </div>
+              </div>
+              <br>
+              <br>
+              {% endfor %}
+        </div>
+</form>
+{% endblock %}

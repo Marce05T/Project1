@@ -1,8 +1,8 @@
 import os
-
+import requests
 from flask import Flask, session, render_template, request, flash, redirect
 from flask_session import Session
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import scoped_session, sessionmaker
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -21,45 +21,20 @@ Session(app)
 engine = create_engine(os.getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
+api_key = "AIzaSyBR0bjH_FYgC5C2OeaCtmtIBKOlYYgrmF8"
+base_url = "https://www.googleapis.com/books/v1/volumes"
 
-#@app.route("/", methods=["GET","POST"])
+isbn='080213825X'
+response = requests.get(f"{base_url}?q=isbn:{isbn}&key={api_key}").json()
+print(response)
 
-   # if session.get("user_id") is None:
-    #    return redirect("/login")
-    
-    #def index():
-     #   if request.method == "POST":
-      #      index_r = request.form.get("index")
-       #     if index_r == index:
-       #         return render_template("indext.html")
-        #    resultado = db.execute("SELECT subject_professor.subject, profesores.id, profesores.name, description_professor.description FROM subject_professor JOIN profesores ON profesores.id = subject_professor.id_professor JOIN description_professor ON description_professor.id_professor = subject_professor.id_professor WHERE subject_professor.subject = ?", index_r)
-
-        #return render_template("index.html", resultados=resultado)
-
-    #else:
-     #   resultado = db.execute("SELECT subject_professor.subject, profesores.id, profesores.name, description_professor.description FROM subject_professor JOIN profesores ON profesores.id = subject_professor.id_professor JOIN description_professor ON description_professor.id_professor = subject_professor.id_professor GROUP BY profesores.name")
-
-    #    return render_template("index.html", resultados=resultado)#
-
-@app.route("/login", methods=["GET","POST"])
-def login():
-    session.clear()
-
-    if request.method == "POST":
-
-
-        rows = db.execute("SELECT * FROM lectores WHERE name = ?", request.form.get("username"))
-
-        if len(rows) != 1 or not check_password_hash(rows[0]["password"], request.form.get("password")):
-            flash("Usuario incorrecto y/o contraseña")
-            return render_template("login.html")
-        else:
-            session["user_id"] = rows[0]["id"]
-            session["profesor"] = True
-            return redirect("/")
-
+@app.route("/", methods=["GET","POST"])
+def index():
+    if session.get("user_id") is None:
+            return redirect("/login")
+        
     else:
-        return render_template("login.html")
+        return render_template("index.html")
 
 @app.route("/register", methods=["GET","POST"])
 def register():
@@ -69,21 +44,42 @@ def register():
         password = request.form.get("password")
         confirmation = request.form.get("confirmation")
 
-        user = db.execute("SELECT id FROM lectores WHERE name = ?",name)
-
+        user = db.execute(text("SELECT id FROM lectores WHERE name = :name"), {"name": name})
+        user_result = user.fetchone()
+        
         users = []
         for i in user:
             users.append(i)
         if len(users) != 0:
-            error = "Este nombre de usuario esta en uso"
+            error = "Este nombre ya existe"
             return render_template("register.html", error = error)
         if password != confirmation:
             error = "La contraseña no coincide"
             return render_template("register.html", error = error)
         else:
             password = generate_password_hash(password)
-            user = db.execute("INSERT INTO lectores(name,password) VALUES(?,?)",name,password)
-            session["id"] = users
+            user = db.execute(text("INSERT INTO lectores (name, password) VALUES (:name, :password)"), {"name": name, "password": password})
+            session["id"] = user_result[0]
             return redirect("/")
     else:
         return render_template("register.html")
+    
+@app.route("/login", methods=["GET","POST"])
+def login():
+    session.clear()
+
+    if request.method == "POST":
+
+        rows = db.execute("SELECT * FROM lectores WHERE name = ?", request.form.get("username"))
+
+        if len(rows) != 1 or not check_password_hash(rows[0]["password"], request.form.get("password")):
+            flash("Usuario incorrecto y/o contraseña")
+            return render_template("login.html")
+        else:
+            session["user_id"] = rows[0]["id"]
+            return redirect("/")
+    else:
+        return render_template("login.html")
+
+
+   

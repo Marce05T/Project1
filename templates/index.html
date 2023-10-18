@@ -1,19 +1,14 @@
 {% extends "layout.html" %}
 {% block title %}
     Menú
-///{% endblock %}
+{% endblock %}
 
 {% block main %}
 <form action="/" method="POST">
-        <select name="index">
-            <option selected>Index</option>
-            <option value="Matemáticas">Matemáticas</option>
-            <option value="Física">Física</option>
-            <option value="Química">Química</option>
-            <option value="Biología">Biología</option>
-            <option value="Inglés">Inglés</option>
-        </select>
-          <button class="btn btn-primary" type="submit">Buscar</button><br><br><br><br>
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" placeholder="Libros, autores o ISBN" aria-describedby="button-addon2">
+          <button class="btn btn-outline-secondary" type="button" id="button-addon2">Buscar</button>
+        </div>
         <div class="row row-cols-2 row-cols-lg-5 g-2 g-lg-3">
             {% for valor in resultados %}
             <br>

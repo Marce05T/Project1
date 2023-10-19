@@ -24,17 +24,32 @@ db = scoped_session(sessionmaker(bind=engine))
 api_key = "AIzaSyBR0bjH_FYgC5C2OeaCtmtIBKOlYYgrmF8"
 base_url = "https://www.googleapis.com/books/v1/volumes"
 
-isbn='080213825X'
-response = requests.get(f"{base_url}?q=isbn:{isbn}&key={api_key}").json()
-print(response)
 
 @app.route("/", methods=["GET","POST"])
 def index():
+    resultados =[]
+    
     if session.get("user_id") is None:
             return redirect("/login")
         
-    else:
-        return render_template("index.html")
+    if request.method == "POST":
+        index_r = request.form.get("index")
+        
+        resultados = db.execute(text("SELECT numisbn FROM books WHERE title LIKE :index_r OR author LIKE :index_r OR numisbn LIKE :index_r"), {"index_r": f"%{index_r}%"}).fetchall()
+        
+    img_urls = []
+    titulos = []
+        
+    for resultado in resultados:
+        response = requests.get(f"{base_url}?q=isbn:{resultado['numisbn']}&key={api_key}").json()
+        img_smalltmbnl = response['items'][0]['volumeInfo']['imageLinks']['smallThumbnail']
+        title = response['items'][0]['volumeInfo']['title']
+        
+        img_urls.append(img_smalltmbnl)  # Agrega la URL de la imagen en miniatura a la lista
+        titulos.append(title)
+
+    return render_template("index.html", resultados=resultados, img_urls = img_urls, titulos = titulos)
+
 
 @app.route("/register", methods=["GET","POST"])
 def register():
@@ -44,42 +59,56 @@ def register():
         password = request.form.get("password")
         confirmation = request.form.get("confirmation")
 
-        user = db.execute(text("SELECT id FROM lectores WHERE name = :name"), {"name": name})
-        user_result = user.fetchone()
+        usuario_existente= db.execute(text("SELECT id FROM lectores WHERE name = :name"), {"name": name}).fetchone()
         
-        users = []
-        for i in user:
-            users.append(i)
-        if len(users) != 0:
-            error = "Este nombre ya existe"
-            return render_template("register.html", error = error)
+        if usuario_existente:
+            flash("Este nombre ya esta en uso")
+            return render_template("register.html")
+        if len(password) < 8 or len(password) > 20:
+            flash("Contraseña invalida")
+            return render_template("register.html") 
         if password != confirmation:
-            error = "La contraseña no coincide"
-            return render_template("register.html", error = error)
+            flash("Las contraseñas no coinciden")
+            return render_template("register.html")
         else:
             password = generate_password_hash(password)
-            user = db.execute(text("INSERT INTO lectores (name, password) VALUES (:name, :password)"), {"name": name, "password": password})
-            session["id"] = user_result[0]
+            
+            result = db.execute(text("INSERT INTO lectores (name, password) VALUES (:name, :password)"), {"name": name, "password": password})
+
+            result = db.execute(text("SELECT lastval()"))
+            user_id = result.scalar()
+            
+            session["user_id"] = user_id
             return redirect("/")
+        
     else:
         return render_template("register.html")
+            
     
 @app.route("/login", methods=["GET","POST"])
 def login():
     session.clear()
 
     if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
 
-        rows = db.execute("SELECT * FROM lectores WHERE name = ?", request.form.get("username"))
+        query = text("SELECT * FROM lectores WHERE name = :username")
+        result = db.execute(query, {"username": username}).fetchone()
 
-        if len(rows) != 1 or not check_password_hash(rows[0]["password"], request.form.get("password")):
-            flash("Usuario incorrecto y/o contraseña")
+        if result is None or not check_password_hash(result["password"], password):
+            flash("Usuario y/o contraseña incorrecto")
             return render_template("login.html")
         else:
-            session["user_id"] = rows[0]["id"]
+            session["user_id"] = result["id"]
             return redirect("/")
     else:
         return render_template("login.html")
+    
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
 
 
    

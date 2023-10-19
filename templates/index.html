@@ -4,25 +4,34 @@
 {% endblock %}
 
 {% block main %}
-<form action="/" method="POST">
-        <div class="input-group mb-3">
-          <input type="text" class="form-control" placeholder="Libros, autores o ISBN" aria-describedby="button-addon2">
-          <button class="btn btn-outline-secondary" type="button" id="button-addon2">Buscar</button>
-        </div>
-        <div class="row row-cols-2 row-cols-lg-5 g-2 g-lg-3">
-            {% for valor in resultados %}
-            <br>
-            <div id="hover" class="cards" style="width: 17rem; height: 25rem;">
-                <img src="https://th.bing.com/th/id/R.48350116a2c84f4c94d63e1aaca665d8?rik=9J0NuLMHD%2fLhvw&riu=http%3a%2f%2ffc06.deviantart.net%2ffs70%2ff%2f2012%2f193%2f6%2fb%2fson_goku_render_extraction_png_by_tatty_bojangles-d56y5ey.png&ehk=Ivju3wueC4nRoaDxlCC9HL%2b69gmcjy5VgiJRYURrG9U%3d&risl=&pid=ImgRaw&r=0" class="card-img-top" alt="">
-                <div class="card-body">
-                  <h5 class="card-title">{{ valor.name }}</h5>
-                  <p class="card-text" maxlenght=5;>{{ valor.description }}</p>
-                  <a href="/pag_prof/{{valor.id}}" class="btn btn-primary" value="{{ valor.name }}" name = "nombrep">Ver a detalle</a>
-                </div>
-              </div>
-              <br>
-              <br>
-              {% endfor %}
-        </div>
+<form action="/" method="POST" class="fondo">
+  <input type="text" id="search-box" placeholder="Search..">
+  <ul id="search-results">
+  </ul>
+  <button class="btn btn-primary" type="submit">Buscar</button><br><br><br><br>
 </form>
+<script>
+  const searchBox = document.getElementById("search-box");
+  const searchResults = document.getElementById("search-results");
+
+  searchBox.addEventListener("input", () => {
+    const query = searchBox.value.trim();
+
+    if (query.length >= 3) {  // Envía una solicitud al servidor cuando el usuario ha escrito al menos 3 caracteres
+      fetch(`/search?query=${query}`)
+        .then((response) => response.json())
+        .then((data) => {
+          searchResults.innerHTML = "";
+          data.forEach((book) => {
+            const listItem = document.createElement("li");
+            listItem.textContent = book.title;
+            searchResults.appendChild(listItem);
+          });
+        });
+    } else {
+      searchResults.innerHTML = "";  // Borra los resultados si la caja de búsqueda está vacía o tiene menos de 3 caracteres
+    }
+  });
+</script>
+
 {% endblock %}
